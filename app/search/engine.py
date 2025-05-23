@@ -1,6 +1,7 @@
 from app.models import CrawledPage
+from config import Config
 
-def search_keyword(data, keyword, max_results=20):
+def search_keyword(data, keyword, max_results=Config.MAX_SEARCH_RESULTS):
     keyword_lower = keyword.lower()
     results = []
 

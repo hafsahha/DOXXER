@@ -1,5 +1,6 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from config import Config
 import numpy as np
 
 class SearchEngine:
@@ -7,13 +8,14 @@ class SearchEngine:
         """
         data: dict {url: {'title':..., 'text':...}, ...}
         """
+        self.data = data
         self.urls = list(data.keys())
         self.docs = [data[url]['text'] for url in self.urls]
 
         self.vectorizer = TfidfVectorizer(stop_words='english')
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs)
 
-    def search(self, query, top_k=20):
+    def search(self, query, top_k=Config.MAX_SEARCH_RESULTS):
         """
         Cari dokumen paling relevan dengan query.
         Returns list of dict [{'url':..., 'title':..., 'score':...}, ...]
@@ -29,7 +31,7 @@ class SearchEngine:
             if score > 0:
                 results.append({
                     'url': self.urls[idx],
-                    'title': data[self.urls[idx]].get('title', self.urls[idx]),
+                    'title': self.data[self.urls[idx]].get('title', self.urls[idx]),
                     'score': score
                 })
         return results

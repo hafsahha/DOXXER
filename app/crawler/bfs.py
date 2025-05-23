@@ -8,6 +8,7 @@ from app.database import db
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from .utils import extract_title, extract_text, extract_links
+from config import Config
 import time
 
 def initialize_driver():
@@ -20,7 +21,7 @@ def initialize_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-def bfs_crawl(seed_url, max_pages=100):
+def bfs_crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
     driver = initialize_driver()
     driver.get(seed_url)
 
