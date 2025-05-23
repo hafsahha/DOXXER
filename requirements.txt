@@ -6,4 +6,3 @@ selenium
 webdriver-manager
 scikit-learn
 numpy
-pandas
