@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rute Link</title>
+</head>
+<body>
+    <h1>Rute Link</h1>
+    <ol>
+        {% for step in route %}
+            <li><a href="{{ step.url }}" target="_blank">{{ step.label }}</a></li>
+        {% endfor %}
+    </ol>
+    <a href="javascript:history.back()">Kembali</a>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hasil Pencarian - {{ keyword }}</title>
+</head>
+<body>
+    <h1>Hasil Pencarian untuk "{{ keyword }}"</h1>
+    {% if results %}
+        <ul>
+            {% for item in results %}
+                <li>
+                    <a href="{{ item.url }}" target="_blank">{{ item.title }}</a> -
+                    <a href="/route?url={{ item.url|urlencode }}">Lihat Rute Link</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Tidak ditemukan hasil pencarian.</p>
+    {% endif %}
+    <a href="/">Kembali ke Pencarian</a>
+</body>
+</html>

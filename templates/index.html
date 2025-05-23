@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mesin Pencari Organisasi</title>
+</head>
+<body>
+    <h1>Mesin Pencari Informasi Publik Organisasi</h1>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form action="/search" method="POST">
+        <input type="text" name="keyword" placeholder="Masukkan kata kunci" required>
+        <button type="submit">Cari</button>
+    </form>
+</body>
+</html>
