@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hasil Pencarian - {{ keyword }}</title>
+    <title>Hasil Pencarian - Mesin Pencari Informasi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Hasil Pencarian untuk "{{ keyword }}"</h1>
+    
     {% if results %}
+        <p>Ditemukan {{ results|length }} hasil pencarian:</p>
         <ul>
             {% for item in results %}
                 <li>
-                    <a href="{{ item.url }}" target="_blank">{{ item.title }}</a> -
-                    <a href="/route?url={{ item.url|urlencode }}">Lihat Rute Link</a>
+                    <div>
+                        <a href="{{ item.url }}" target="_blank">{{ item.title }}</a>
+                        <a href="{{ url_for('main.show_route', target_url=item.url) }}" class="route-btn">Lihat Rute Link</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Tidak ditemukan hasil pencarian.</p>
+        <p>Tidak ditemukan hasil pencarian yang cocok.</p>
     {% endif %}
+
     <a href="/">Kembali ke Pencarian</a>
 </body>
 </html>

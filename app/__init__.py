@@ -1,12 +1,14 @@
 from flask import Flask
+from .database import init_db
 
 def create_app():
     app = Flask(__name__, template_folder='../templates')
-
-    # Load konfigurasi dari config.py
     app.config.from_object('config.Config')
 
-    # Import dan register blueprint routes
+    # Inisialisasi database
+    init_db(app)
+
+    # Register blueprint untuk routes
     from .routes import main_bp
     app.register_blueprint(main_bp)
 

@@ -1,47 +1,75 @@
-import requests
+﻿# filepath: d:\kuliah\S4\Andal\DOXXER\app\crawler\dfs.py
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from app.models import CrawledPage
+from app.database import db
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from .utils import extract_title, extract_text, extract_links
+import time
 
-def is_valid_url(url, base_domain):
-    try:
-        parsed = urlparse(url)
-        return parsed.netloc.endswith(base_domain)
-    except:
-        return False
+def initialize_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
 
 def dfs_crawl(seed_url, max_pages=100):
+    driver = initialize_driver()
+    driver.get(seed_url)
+
     base_domain = urlparse(seed_url).netloc
     visited = set()
-    pages = {}
+    stack = [seed_url]
+    
+    print(f"Mulai crawling DFS dari {seed_url}...")
+    print(f"Base domain: {base_domain}")
 
-    def dfs(url):
-        if url in visited or len(visited) >= max_pages:
-            return
+    while stack and len(visited) < max_pages:
+        url = stack.pop()
+        if url in visited:
+            continue
+            
+        print(f"Mengunjungi: {url}")
         try:
-            response = requests.get(url, timeout=5)
-            if response.status_code != 200:
-                return
-            soup = BeautifulSoup(response.text, 'html.parser')
-            title = soup.title.string.strip() if soup.title else url
-            text = soup.get_text(separator=' ', strip=True)
+            driver.get(url)
+            time.sleep(2)
+            
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            title = extract_title(soup, url)
+            text = extract_text(soup)
+            links = extract_links(soup, url, base_domain)
+            
+            page = CrawledPage.query.filter_by(url=url).first()
+            if not page:
+                page = CrawledPage(url=url)
+            page.title = title
+            page.text = text
+            page.set_links(links)
 
-            links = []
-            for a_tag in soup.find_all('a', href=True):
-                href = urljoin(url, a_tag['href'])
-                if is_valid_url(href, base_domain) and href not in visited:
-                    links.append((href, a_tag.get_text(strip=True)))
-
-            pages[url] = {
-                'title': title,
-                'text': text,
-                'links': links
-            }
+            db.session.add(page)
+            db.session.commit()
+            
             visited.add(url)
+            print(f"Halaman tersimpan: {title} ({url})")
+            print(f"Ditemukan {len(links)} link di halaman ini")
 
-            for (link_url, _) in links:
-                dfs(link_url)
+            # Tambahkan link yang belum dikunjungi ke stack (terbalik agar DFS berjalan sesuai urutan asli link)
+            for link_url, link_text in reversed(links):
+                if link_url not in visited and link_url not in stack:
+                    stack.append(link_url)
+                    
         except Exception as e:
-            print(f"Error crawling {url}: {e}")
+            print(f"Error saat mengunjungi {url}: {str(e)}")
+            visited.add(url)  # Tandai sebagai dikunjungi agar tidak dicoba lagi
 
-    dfs(seed_url)
-    return pages
+    print(f"DFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    driver.quit()
+    return visited

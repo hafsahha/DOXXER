@@ -1,16 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mesin Pencari Organisasi</title>
+    <title>Mesin Pencari Informasi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Mesin Pencari Informasi Publik Organisasi</h1>
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    <form action="/search" method="POST">
-        <input type="text" name="keyword" placeholder="Masukkan kata kunci" required>
-        <button type="submit">Cari</button>
-    </form>
+    <div class="container">
+        <h1>Mesin Pencari Informasi Publik Organisasi</h1>
+
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+
+        {% if message %}
+            <div class="success-message">{{ message }}</div>
+        {% endif %}
+
+        <div class="search-box">
+            <h2>Pencarian</h2>
+            <form action="/search" method="POST" class="search-form">
+                <input type="text" name="keyword" placeholder="Masukkan kata kunci pencarian..." required>
+                <button type="submit" class="search-button">Cari</button>
+            </form>
+        </div>
+
+        <div class="crawl-box">
+            <h2>Crawling</h2>
+            <p>Gunakan fitur ini untuk melakukan crawling pada website dari URL tertentu.</p>
+            <form action="/crawl" method="POST" class="crawl-form">
+                <div class="form-group">
+                    <label for="url">URL Awal:</label>
+                    <input type="text" name="url" placeholder="https://www.upi.edu" value="{{ config.SEED_URL }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="algorithm">Algoritma Penelusuran:</label>
+                    <select name="algorithm" required>
+                        <option value="bfs">BFS (Breadth-First Search)</option>
+                        <option value="dfs">DFS (Depth-First Search)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="crawl-button">Mulai Crawling</button>
+            </form>
+        </div>
+
+        <footer>
+            <p>Mesin Pencari Informasi Publik Organisasi &copy; {{ current_year }}</p>
+        </footer>
+    </div>
 </body>
 </html>

@@ -1,68 +1,81 @@
+﻿# filepath: d:\kuliah\S4\Andal\DOXXER\app\crawler\bfs.py
 from collections import deque
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service  # Import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from app.models import CrawledPage
+from app.database import db
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from .utils import extract_title, extract_text, extract_links
+import time
 
-def is_valid_url(url, base_domain):
-    """
-    Cek apakah url masih dalam domain/subdomain yang sama dengan base_domain.
-    """
-    try:
-        parsed = urlparse(url)
-        return parsed.netloc.endswith(base_domain)
-    except Exception:
-        return False
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+def initialize_driver():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    return driver
 
 def bfs_crawl(seed_url, max_pages=100):
-    """
-    Crawling menggunakan BFS dimulai dari seed_url.
-    Mengembalikan dictionary data halaman dengan format:
-    {
-        url: {
-            'title': <judul halaman>,
-            'text': <isi teks halaman>,
-            'links': [(link_url, anchor_text), ...]
-        },
-        ...
-    }
-    """
+    driver = initialize_driver()
+    driver.get(seed_url)
+
     base_domain = urlparse(seed_url).netloc
     visited = set()
     queue = deque([seed_url])
-    pages = {}
+    
+    print(f"Mulai crawling BFS dari {seed_url}...")
+    print(f"Base domain: {base_domain}")
 
     while queue and len(visited) < max_pages:
-        current_url = queue.popleft()
-
-        if current_url in visited:
+        url = queue.popleft()
+        if url in visited:
             continue
-
+            
+        print(f"Mengunjungi: {url}")
         try:
-            response = requests.get(current_url, timeout=5)
-            if response.status_code != 200:
-                continue
+            driver.get(url)
+            time.sleep(2)
+            
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            title = extract_title(soup, url)
+            text = extract_text(soup)
+            links = extract_links(soup, url, base_domain)
+            
+            page = CrawledPage.query.filter_by(url=url).first()
+            if not page:
+                page = CrawledPage(url=url)
+            page.title = title
+            page.text = text
+            page.set_links(links)
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            db.session.add(page)
+            db.session.commit()
+            
+            visited.add(url)
+            print(f"Halaman tersimpan: {title} ({url})")
+            print(f"Ditemukan {len(links)} link di halaman ini")
 
-            title = soup.title.string.strip() if soup.title else current_url
-            text = soup.get_text(separator=' ', strip=True)
-
-            links = []
-            for a_tag in soup.find_all('a', href=True):
-                href = urljoin(current_url, a_tag['href'])
-                if is_valid_url(href, base_domain) and href not in visited:
-                    links.append((href, a_tag.get_text(strip=True)))
-                    queue.append(href)
-
-            pages[current_url] = {
-                'title': title,
-                'text': text,
-                'links': links
-            }
-
-            visited.add(current_url)
-
+            # Tambahkan semua link yang belum dikunjungi dan belum ada di queue
+            for link_url, link_text in links:
+                if link_url not in visited and link_url not in queue:
+                    queue.append(link_url)
+                    
         except Exception as e:
-            print(f"Error crawling {current_url}: {e}")
+            print(f"Error saat mengunjungi {url}: {str(e)}")
+            visited.add(url)  # Tandai sebagai dikunjungi agar tidak dicoba lagi
 
-    return pages
+    print(f"BFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    driver.quit()
+    return visited
