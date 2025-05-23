@@ -1,18 +1,14 @@
-**Kelompok 7 - DOXXER**
-*Web Information Retrieval System*
+Kelompok 7 - DOXXER
+Web Information Retrieval System
 
----
+Anggota Kelompok:
 
-**Anggota Kelompok:**
+1. Datuk Daneswara R. Samsura (NIM 2308224)
+2. Hafsah Hamidah (NIM 2311474)
+3. Klara Ollivviera A. G (NIM 2306205)
+4. Naeya Adeani Putri (NIM 2304017)
 
-1. Datuk Daneswara R. Samsura (NPM 2308224)
-2. Hafsah Hamidah (NPM 2311474)
-3. Klara Ollivviera A. G (NPM 2306205)
-4. Naeya Adeani Putri (NPM 2304017)
-
----
-
-**Kelas:** Analisis Algoritma S1
-**Semester:** 4
-**Tahun Akademik:** 2024/2025
-**Universitas:** Pendidikan Indonesia
+Kelas: Analisis Algoritma C1
+Semester: 4
+Tahun Akademik: 2024/2025
+Universitas Pendidikan Indonesia
