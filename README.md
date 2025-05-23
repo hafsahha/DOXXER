@@ -208,7 +208,7 @@ Universitas Pendidikan Indonesia, 2024
    ```bash
    git clone https://github.com/yourusername/DOXXER.git
    cd DOXXER
-````
+   ```
 
 2. Buat dan aktifkan virtual environment:
 
@@ -303,10 +303,10 @@ DFS menelusuri satu jalur hingga kedalaman maksimum sebelum kembali menjelajahi 
 
 ## Anggota Kelompok
 
-1. Datuk Daneswara R. Samsura (NPM 2308224)
-2. Hafsah Hamidah (NPM 2311474)
-3. Klara Ollivviera A. G (NPM 2306205)
-4. Naeya Adeani Putri (NPM 2304017)
+1. Datuk Daneswara R. Samsura (NIM 2308224)
+2. Hafsah Hamidah (NIM 2311474)
+3. Klara Ollivviera A. G (NIM 2306205)
+4. Naeya Adeani Putri (NIM 2304017)
 
 ## Lisensi
 
