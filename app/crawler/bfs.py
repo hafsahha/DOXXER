@@ -1,7 +1,6 @@
-﻿# filepath: d:\kuliah\S4\Andal\DOXXER\app\crawler\bfs.py
-from collections import deque
+﻿from collections import deque
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service  # Import Service
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from app.models import CrawledPage
@@ -10,11 +9,6 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 from .utils import extract_title, extract_text, extract_links
 import time
-
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 
 def initialize_driver():
     chrome_options = Options()

@@ -1,5 +1,4 @@
-﻿# filepath: d:\kuliah\S4\Andal\DOXXER\app\crawler\dfs.py
-from selenium import webdriver
+﻿from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
