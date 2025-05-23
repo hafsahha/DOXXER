@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<<<<<<< HEAD
     <title>Mesin Pencari Informasi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -48,6 +49,38 @@
         <footer>
             <p>Mesin Pencari Informasi Publik Organisasi &copy; {{ current_year }}</p>
         </footer>
+=======
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>DOXXER</title>
+</head>
+<body>
+    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
+        <div class="mb-8">
+            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png" alt="Logo" class="w-64 mx-auto hidden dark:block">
+            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_dark_color_272x92dp.png" alt="Logo" class="w-64 mx-auto dark:hidden block">
+        </div>
+        <form class="w-full max-w-xl mb-16" action="/search" method="POST">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center border border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" name="keyword" class="flex-grow outline-none bg-transparent text-lg" placeholder="Search..." required>
+                </div>
+                <div class="flex items-center border border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7m-6 0V4a2 2 0 00-2-2H9a2 2 0 00-2 2v3m6 0h6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18"></path>
+                    </svg>
+                    <input type="text" name="domain" value="https://spada.upi.edu" class="flex-grow outline-none bg-transparent text-lg" placeholder="Domain (misal: upi.edu)" required>
+                </div>
+            </div>
+            <button type="submit" class="hidden"></button>
+        </form>
+>>>>>>> 6ff6c6251c8747241e6b592c30052780a3ef5a3c
     </div>
 </body>
 </html>
