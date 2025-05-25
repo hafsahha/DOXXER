@@ -6,9 +6,8 @@
 </head>
 <body>
     <h1>Hasil Pencarian untuk "{{ keyword }}"</h1>
-    
-    {% if results %}
-        <p>Ditemukan {{ results|length }} hasil pencarian:</p>
+      {% if results %}
+        <p>Ditemukan {{ total_results }} hasil pencarian (menampilkan {{ results|length }} hasil per halaman):</p>
         <ul>
             {% for item in results %}
                 <li>
@@ -19,6 +18,30 @@
                 </li>
             {% endfor %}
         </ul>
+        
+        <!-- Pagination controls -->
+        <div class="pagination">
+            {% if total_pages > 1 %}
+                <p>Halaman {{ page }} dari {{ total_pages }}</p>
+                <div class="pagination-controls">
+                    {% if page > 1 %}
+                    <a href="{{ url_for('main.search', keyword=keyword, page=page-1) }}" class="page-btn">← Sebelumnya</a>
+                    {% endif %}
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == page %}
+                        <span class="current-page">{{ p }}</span>
+                        {% else %}
+                        <a href="{{ url_for('main.search', keyword=keyword, page=p) }}" class="page-btn">{{ p }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page < total_pages %}
+                    <a href="{{ url_for('main.search', keyword=keyword, page=page+1) }}" class="page-btn">Selanjutnya →</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
     {% else %}
         <p>Tidak ditemukan hasil pencarian yang cocok.</p>
     {% endif %}

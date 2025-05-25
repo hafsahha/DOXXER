@@ -3,7 +3,10 @@ class Config:
     SEED_URL = 'https://www.upi.edu'
 
     # Batas maksimal halaman yang akan di-crawl
-    MAX_CRAWL_PAGES = 100
+    MAX_CRAWL_PAGES = 200
+
+    # Batas maksimal kedalaman crawling (hanya untuk DFS)
+    MAX_CRAWL_DEPTH = 3
 
     # Batas maksimal hasil pencarian yang ditampilkan
     MAX_SEARCH_RESULTS = 20

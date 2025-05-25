@@ -28,16 +28,43 @@ def crawl():
     
     return render_template('index.html', message=f"Berhasil melakukan crawling dari {url}")
 
-@main_bp.route('/search', methods=['POST'])
+@main_bp.route('/search', methods=['POST', 'GET'])
 def search():
-    keyword = request.form.get('keyword', '').strip()
-    if not keyword:
-        return render_template('index.html', error="Masukkan kata kunci pencarian.")
-    
-    data = load_data_from_db()
-    results = search_keyword(data, keyword)
-    
-    return render_template('results.html', keyword=keyword, results=results)
+    if request.method == 'POST':
+        keyword = request.form.get('keyword', '').strip()
+        if not keyword:
+            return render_template('index.html', error="Masukkan kata kunci pencarian.")
+        # Redirect to GET with keyword parameter to allow pagination
+        return redirect(url_for('main.search', keyword=keyword, page=1))
+    else:
+        keyword = request.args.get('keyword', '').strip()
+        if not keyword:
+            return redirect(url_for('main.index'))
+        
+        # Handle pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = Config.MAX_SEARCH_RESULTS  # Items per page (reusing the existing config)
+        
+        data = load_data_from_db()
+        all_results = search_keyword(data, keyword)
+        
+        # Calculate pagination
+        total_results = len(all_results)
+        total_pages = (total_results + per_page - 1) // per_page  # Ceiling division
+        
+        # Get results for current page
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_results = all_results[start_idx:end_idx]
+        
+        return render_template(
+            'results.html', 
+            keyword=keyword, 
+            results=paginated_results,
+            total_results=total_results,
+            page=page,
+            total_pages=total_pages
+        )
 
 @main_bp.route('/route/<path:target_url>')
 def show_route(target_url):
