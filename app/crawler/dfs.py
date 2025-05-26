@@ -2,15 +2,14 @@
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-from app.models import CrawledPage
-from app.database import db
-from urllib.parse import urlparse
+from app.models import CrawledPage, Base
+from app.database import get_domain_from_url, get_session_for_domain
 from bs4 import BeautifulSoup
 from .utils import extract_title, extract_text, extract_links
+from config import Config
 import time
 
-# Import Config for access to configuration values
-from config import Config
+log_stream = []
 
 def initialize_driver():
     chrome_options = Options()
@@ -22,18 +21,22 @@ def initialize_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-def dfs_crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH):
-    # Set default values from Config
-        
+def log_message(message):
+    print(message)
+    log_stream.append(message)
+
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH):
     driver = initialize_driver()
     driver.get(seed_url)
 
-    base_domain = urlparse(seed_url).netloc
+    domain = get_domain_from_url(seed_url)
+    session, engine = get_session_for_domain(domain, "dfs")
+    Base.metadata.create_all(engine)
     visited = set()
     stack = [(seed_url, 0)]  # Menyimpan URL dan kedalaman (depth)
     
     print(f"Mulai crawling DFS dari {seed_url}...")
-    print(f"Base domain: {base_domain}")
+    print(f"Base domain: {domain}")
 
     while stack and len(visited) < max_pages:
         url, depth = stack.pop()
@@ -44,8 +47,13 @@ def dfs_crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_C
         
         if url in visited:
             continue
+        visited.add(url)
+
+        existing = session.query(CrawledPage).filter_by(url=url).first()
+        if existing:
+            continue
             
-        print(f"Depth {depth}: Mengunjungi {url}")
+        log_message(f"Depth {depth}: Mengunjungi {url}")
         try:
             driver.get(url)
             time.sleep(2)
@@ -54,21 +62,18 @@ def dfs_crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_C
             soup = BeautifulSoup(html_content, "html.parser")
             title = extract_title(soup, url)
             text = extract_text(soup)
-            links = extract_links(soup, url, base_domain)
+            links = extract_links(soup, url, domain)
             
-            page = CrawledPage.query.filter_by(url=url).first()
-            if not page:
-                page = CrawledPage(url=url)
+            page = CrawledPage(url=url)
             page.title = title
             page.text = text
             page.set_links(links)
 
-            db.session.add(page)
-            db.session.commit()
+            session.add(page)
+            session.commit()
             
-            visited.add(url)
-            print(f"Halaman tersimpan: {title} ({url})")
-            print(f"Ditemukan {len(links)} link di halaman ini")
+            log_message(f"Halaman tersimpan: {title} ({url})")
+            log_message(f"Ditemukan {len(links)} link di halaman ini")
 
             # Tambahkan link yang belum dikunjungi ke stack dengan penambahan kedalaman
             for link_url, link_text in reversed(links):
@@ -76,9 +81,11 @@ def dfs_crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_C
                     stack.append((link_url, depth + 1))  # Increment depth
 
         except Exception as e:
-            print(f"Error saat mengunjungi {url}: {str(e)}")
+            log_message(f"Error saat mengunjungi {url}: {str(e)}")
             visited.add(url)  # Tandai sebagai dikunjungi agar tidak dicoba lagi
 
-    print(f"DFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    log_message(f"DFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    log_stream.clear() # Kosongkan log stream setelah selesai
+    session.remove()
     driver.quit()
     return visited
