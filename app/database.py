@@ -1,11 +1,26 @@
+import os
+from urllib.parse import urlparse
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 db = SQLAlchemy()
 
-def init_db(app):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crawl_cache.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.init_app(app)
+def get_domain_from_url(url):
+    parsed = urlparse(url)
+    return parsed.netloc.replace("www.", "")
 
-    with app.app_context():
-        db.create_all()  # Membuat tabel yang dibutuhkan jika belum ada
+def get_domain_db_path(domain, method):
+    return os.path.join('instance', f'{method}-{domain}.db')
+
+# Session yang bisa diganti-ganti tergantung domain
+SessionLocal = {}
+
+def get_session_for_domain(domain, method):
+    if domain not in SessionLocal:
+        db_path = get_domain_db_path(domain, method)
+        engine = create_engine(f'sqlite:///{db_path}')
+        session_factory = sessionmaker(bind=engine)
+        SessionLocal[domain] = scoped_session(session_factory)
+        return SessionLocal[domain], engine
+    return SessionLocal[domain], SessionLocal[domain].bind

@@ -1,9 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Response, Blueprint, request, stream_with_context, render_template, redirect, url_for, flash
 from app.search.engine import search_keyword, load_data_from_db
-from app.crawler.bfs import bfs_crawl
-from app.crawler.dfs import dfs_crawl
+from app.crawler import bfs, dfs
+from app.crawler.bfs import log_stream as bfs_log
+from app.crawler.dfs import log_stream as dfs_log
 from app.models import CrawledPage
 from config import Config
+import requests
+import time
 
 main_bp = Blueprint('main', __name__)
 
@@ -14,26 +17,37 @@ def index():
 @main_bp.route('/crawl', methods=['POST'])
 def crawl():
     url = request.form.get('url')
-    algorithm = request.form.get('algorithm', 'bfs')
+    algorithm = request.form.get('algorithm')
     
-    if not url:
-        return render_template('index.html', error="Masukkan URL untuk crawling.")
-    
+    try:
+        response = requests.get(url, timeout=5)
+        valid_url = response.status_code == 200
+    except Exception:
+        valid_url = False
+
+    if not url or not valid_url:
+        flash('URL tidak valid atau tidak dapat diakses.', 'error_crawl')
+        return redirect(url_for('main.index'))
+
     if algorithm == 'bfs':
-        bfs_crawl(url)
+        bfs.crawl(url)
     elif algorithm == 'dfs':
-        dfs_crawl(url)
+        dfs.crawl(url)
     else:
-        return render_template('index.html', error="Algoritma tidak dikenali.")
+        flash('Pilih algoritma crawling yang valid.', 'error_crawl')
+        return redirect(url_for('main.index'))
     
-    return render_template('index.html', message=f"Berhasil melakukan crawling dari {url}")
+    flash('Crawling berhasil!', 'message')
+    return redirect(url_for('main.index'))
 
 @main_bp.route('/search', methods=['POST', 'GET'])
 def search():
     if request.method == 'POST':
         keyword = request.form.get('keyword', '').strip()
         if not keyword:
-            return render_template('index.html', error="Masukkan kata kunci pencarian.")
+            flash('Masukkan kata kunci pencarian.', 'error_search')
+            return redirect(url_for('main.index'))
+        
         # Redirect to GET with keyword parameter to allow pagination
         return redirect(url_for('main.search', keyword=keyword, page=1))
     else:
@@ -118,3 +132,26 @@ def get_page_title(url):
     if page and page.title:
         return page.title
     return url
+
+@main_bp.route('/logs/stream/<algorithm>')
+def stream_logs(algorithm):
+    """
+    Endpoint untuk streaming log crawling untuk BFS atau DFS
+    """
+    if algorithm == 'bfs':
+        log_stream = bfs_log
+    elif algorithm == 'dfs':
+        log_stream = dfs_log
+    else:
+        return Response("Algoritma tidak valid.", status=400)
+
+    def event_stream():
+        previous_length = 0
+        while True:
+            if len(log_stream) > previous_length:
+                new_logs = log_stream[previous_length:]
+                for log in new_logs:
+                    yield f"data: {log}\n\n"
+                previous_length = len(log_stream)
+
+    return Response(stream_with_context(event_stream()), content_type='text/event-stream')
