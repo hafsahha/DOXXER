@@ -1,15 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Rute Link</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Rute Link - DOXXER</title>
 </head>
 <body>
-    <h1>Rute Link</h1>
-    <ol>
-        {% for step in route %}
-            <li><a href="{{ step.url }}" target="_blank">{{ step.label }}</a></li>
-        {% endfor %}
-    </ol>
-    <a href="javascript:history.back()">Kembali</a>
+    <div class="flex flex-col items-center min-h-screen bg-gray-100 dark:bg-gray-800 pt-10 px-4">
+        <div class="mb-8">
+            <h1 class="text-3xl text-black dark:text-white">Visualisasi Rute Link</h1>
+        </div>
+        
+        <div class="w-full max-w-4xl mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-gray-600 dark:text-gray-300">Rute dari URL awal ke target</p>
+                <a href="javascript:history.back()" class="flex items-center px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Kembali
+                </a>
+            </div>
+            
+            <!-- Terminal-like interface -->
+            <div class="rounded-lg bg-gray-900 text-green-400 shadow-md overflow-hidden font-mono text-sm p-1">
+                <div class="p-3 bg-gray-800 flex items-center">
+                    <div class="flex space-x-2 mr-4">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div class="flex-1 text-center text-gray-400 text-xs uppercase tracking-wider">Rute Traversal</div>
+                </div>
+                
+                <div class="p-4 overflow-auto max-h-96">
+                    <div class="mb-2 text-blue-300">$ doxxer --route --visualize</div>
+                    
+                    {% for step in route %}
+                        <div class="mb-4">
+                            <div class="flex items-start">
+                                <span class="text-yellow-400 mr-2">»</span>
+                                <div class="flex-1">
+                                    <div class="text-white mb-1">Step {{ loop.index }}: {{ step.label }}</div>
+                                    <a href="{{ step.url }}" target="_blank" class="text-blue-400 hover:text-blue-300 break-all">{{ step.url }}</a>
+                                </div>
+                            </div>
+                            {% if not loop.last %}
+                                <div class="ml-5 my-2 text-gray-500">
+                                    └── <span class="text-gray-400">Traversing link...</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="text-white mt-4 border-t border-gray-700 pt-3">
+                        <span class="text-gray-500">$</span> Route found with {{ route|length }} steps
+                        <span class="animate-pulse">▌</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="w-full max-w-4xl pb-10">
+            <p class="text-center text-gray-500 dark:text-gray-400 text-sm">© 2025 DOXXER - Mesin Pencari Informasi Publik Organisasi dengan Algoritma BFS/DFS</p>
+        </div>
+    </div>
+
+    <script>
+        // Add simple animation for terminal-like experience
+        document.addEventListener('DOMContentLoaded', function() {
+            const steps = document.querySelectorAll('.mb-4');
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.style.opacity = '0';
+                    step.style.transition = 'opacity 0.5s';
+                    setTimeout(() => { step.style.opacity = '1'; }, 50);
+                }, index * 300);
+            });
+        });
+    </script>
 </body>
 </html>

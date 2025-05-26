@@ -63,9 +63,23 @@
                 {% endfor %}
             {% endwith %}
             </div>
-        </div>
-        <div class="flex w-full max-w-2xl text-gray-500 dark:text-gray-400 h-[50vh] overflow-hidden">
-            <div class="flex flex-col justify-end max-h-fit" id="logs"></div>
+        </div>        <div class="w-full max-w-2xl hidden" id="log-container">
+            <!-- Terminal-like interface for logs -->
+            <div class="rounded-lg bg-gray-900 text-green-400 shadow-lg overflow-hidden font-mono text-sm">
+                <div class="p-2 bg-gray-800 flex items-center">
+                    <div class="flex space-x-2 mr-4">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <div class="flex-1 text-center text-gray-400 text-xs uppercase tracking-wider">Crawling Log</div>
+                </div>
+                
+                <div class="p-4 overflow-auto h-[50vh]" id="terminal">
+                    <div class="mb-2 text-blue-300">$ doxxer --crawl --algorithm=<span id="algo-type"></span></div>
+                    <div id="logs" class="space-y-1"></div>
+                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -86,21 +100,61 @@
             $('#crawl-form select').change(function() {
                 if ($(this).val() && $('#crawl-form input').val().length > 0) $('#crawl-form button').slideDown();
                 else $('#crawl-form button').slideUp();
-            });
-
-            $('#crawl-form').on('submit', function() {
-                $('#logs').parent().slideDown();
+            });            $('#crawl-form').on('submit', function() {
+                $('#log-container').slideDown();
                 $('#search-form').slideUp();
-                $('#logs').html('')
-
-                const eventSource = new EventSource("/logs/stream/" + $('#crawl-form select').val());
+                $('#logs').html('');
+                
+                const algorithm = $('#crawl-form select').val();
+                $('#algo-type').text(algorithm);
+                
+                // Add initial message
+                const url = $('#crawl-form input[name="url"]').val();
+                $('#logs').append('<div class="log-entry"><span class="text-yellow-400 mr-2">»</span>Initializing crawler for ' + url + '</div>');
+                
+                const eventSource = new EventSource("/logs/stream/" + algorithm);
                 eventSource.onmessage = function (event) {
-                    $('#logs').append('<div class="text-sm">' + event.data + '</div>');
-                };
-
-                eventSource.onerror = function () {
-                    $('#logs').append('<div class="text-red-500 text-sm">Streaming log gagal atau telah selesai.</div>');
+                    // Format log entry based on content
+                    let logClass = "text-green-300";
+                    let prefix = "│";
+                    
+                    if (event.data.includes("Error")) {
+                        logClass = "text-red-400";
+                        prefix = "✗";
+                    } else if (event.data.includes("Mengunjungi")) {
+                        logClass = "text-cyan-400";
+                        prefix = "→";
+                    } else if (event.data.includes("Halaman tersimpan")) {
+                        logClass = "text-lime-400";
+                        prefix = "✓";
+                    } else if (event.data.includes("selesai")) {
+                        logClass = "text-blue-300 font-bold";
+                        prefix = "✨";
+                    }
+                    
+                    $('#logs').append('<div class="log-entry"><span class="text-gray-500 mr-2">' + prefix + '</span><span class="' + logClass + '">' + event.data + '</span></div>');
+                    
+                    // Auto-scroll to bottom
+                    const terminal = document.getElementById('terminal');
+                    terminal.scrollTop = terminal.scrollHeight;
+                };                eventSource.onerror = function () {
+                    // Add completion message
+                    $('#logs').append('<div class="mt-4 border-t border-gray-700 pt-3"><span class="text-gray-500">$</span> Crawling completed <span class="animate-pulse text-gray-500">▌</span></div>');
                     eventSource.close();
+                    
+                    // Show search form after a short delay
+                    setTimeout(() => {
+                        $('#search-form').slideDown();
+                        
+                        // Add a small "Toggle Logs" button
+                        if (!$('#log-toggle').length) {
+                            $('<button id="log-toggle" class="mt-2 text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition">Toggle Logs</button>')
+                                .insertAfter('#search-form')
+                                .click(function() {
+                                    $('#log-container').slideToggle();
+                                });
+                        }
+                    }, 2000);
                 };
             });
         });

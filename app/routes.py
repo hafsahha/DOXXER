@@ -1,5 +1,6 @@
 from flask import Response, Blueprint, request, stream_with_context, render_template, redirect, url_for, flash
-from app.search.engine import search_keyword, load_data_from_db
+from app.search.engine import search_keyword, load_data_from_db, get_available_databases
+from app.search.similarity import SearchEngine
 from app.crawler import bfs, dfs
 from app.crawler.bfs import log_stream as bfs_log
 from app.crawler.dfs import log_stream as dfs_log
@@ -7,12 +8,15 @@ from app.models import CrawledPage
 from config import Config
 import requests
 import time
+import os
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    # Get a list of all available databases for the dropdown
+    databases = get_available_databases()
+    return render_template('index.html', databases=databases)
 
 @main_bp.route('/crawl', methods=['POST'])
 def crawl():
@@ -48,8 +52,11 @@ def search():
             flash('Masukkan kata kunci pencarian.', 'error_search')
             return redirect(url_for('main.index'))
         
-        # Redirect to GET with keyword parameter to allow pagination
-        return redirect(url_for('main.search', keyword=keyword, page=1))
+        # Get selected database
+        database = request.form.get('database', '')
+        
+        # Redirect to GET with keyword and database parameters to allow pagination
+        return redirect(url_for('main.search', keyword=keyword, database=database, page=1))
     else:
         keyword = request.args.get('keyword', '').strip()
         if not keyword:
@@ -59,21 +66,40 @@ def search():
         page = request.args.get('page', 1, type=int)
         per_page = Config.MAX_SEARCH_RESULTS  # Items per page (reusing the existing config)
         
-        data = load_data_from_db()
-        all_results = search_keyword(data, keyword)
+        # Get selected database
+        database = request.args.get('database', '')
+        
+        # Load data from the selected database or all databases
+        data = load_data_from_db(database)
+        
+        # Use more advanced search with TF-IDF if available
+        try:
+            if hasattr(Config, 'USE_ADVANCED_SEARCH') and Config.USE_ADVANCED_SEARCH and len(data) > 5:
+                search_engine = SearchEngine(data)
+                all_results = search_engine.search(keyword)
+            else:
+                all_results = search_keyword(data, keyword)
+        except Exception as e:
+            print(f"Error using advanced search: {str(e)}")
+            all_results = search_keyword(data, keyword)
         
         # Calculate pagination
         total_results = len(all_results)
-        total_pages = (total_results + per_page - 1) // per_page  # Ceiling division
+        total_pages = max(1, (total_results + per_page - 1) // per_page)  # Ceiling division, minimum 1 page
         
         # Get results for current page
         start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        paginated_results = all_results[start_idx:end_idx]
+        end_idx = min(start_idx + per_page, total_results)  # Prevent index out of bounds
+        paginated_results = all_results[start_idx:end_idx] if start_idx < total_results else []
+        
+        # Get all available databases for the database selector
+        databases = get_available_databases()
         
         return render_template(
             'results.html', 
-            keyword=keyword, 
+            keyword=keyword,
+            database=database,
+            databases=databases,
             results=paginated_results,
             total_results=total_results,
             page=page,
