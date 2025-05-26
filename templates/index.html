@@ -1,86 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- <<<<<<< HEAD -->
-    <title>Mesin Pencari Informasi</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Mesin Pencari Informasi Publik Organisasi</h1>
-
-        {% if error %}
-            <div class="error-message">{{ error }}</div>
-        {% endif %}
-
-        {% if message %}
-            <div class="success-message">{{ message }}</div>
-        {% endif %}
-
-        <div class="search-box">
-            <h2>Pencarian</h2>
-            <form action="/search" method="POST" class="search-form">
-                <input type="text" name="keyword" placeholder="Masukkan kata kunci pencarian..." required>
-                <button type="submit" class="search-button">Cari</button>
-            </form>
-        </div>
-
-        <div class="crawl-box">
-            <h2>Crawling</h2>
-            <p>Gunakan fitur ini untuk melakukan crawling pada website dari URL tertentu.</p>
-            <form action="/crawl" method="POST" class="crawl-form">
-                <div class="form-group">
-                    <label for="url">URL Awal:</label>
-                    <input type="text" name="url" placeholder="https://www.upi.edu" value="{{ config.SEED_URL }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="algorithm">Algoritma Penelusuran:</label>
-                    <select name="algorithm" required>
-                        <option value="bfs">BFS (Breadth-First Search)</option>
-                        <option value="dfs">DFS (Depth-First Search)</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="crawl-button">Mulai Crawling</button>
-            </form>
-        </div>
-
-        <footer>
-            <p>Mesin Pencari Informasi Publik Organisasi &copy; {{ current_year }}</p>
-        </footer>
-<!-- =======
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <title>DOXXER</title>
+    <title>Mesin Pencari Informasi</title>
 </head>
 <body>
     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
-        <div class="mb-8">
-            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png" alt="Logo" class="w-64 mx-auto hidden dark:block">
-            <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_dark_color_272x92dp.png" alt="Logo" class="w-64 mx-auto dark:hidden block">
+        <div class="mb-16">
+            <h1 class="text-3xl text-black dark:text-white">Sistem Pencarian Informasi Publik</h1>
         </div>
-        <form class="w-full max-w-xl mb-16" action="/search" method="POST">
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center border border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+        <div class="w-full max-w-2xl mb-12 flex flex-col gap-3">
+            <form action="/search" method="POST" class="flex items-center gap-3" id="search-form">
+                <div class="flex items-center border-2 border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition w-full">
                     <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <path d="M9 1a8 8 0 1 1 0 16a8 8 0 1 1 0-16 M0 0M14.6 14.6L23 23" />
                     </svg>
-                    <input type="text" name="keyword" class="flex-grow outline-none bg-transparent text-lg" placeholder="Search..." required>
+                    <input type="text" name="keyword" class="flex-grow outline-none bg-transparent text-lg" placeholder="Cari kata kunci...">
                 </div>
-                <div class="flex items-center border border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+                <div class="flex items-center border-2 border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+                    <select name="database" class="flex-grow outline-none bg-transparent text-lg h-[28px] w-[125px]">
+                        <option value="" disabled selected>Situs</option>
+                        <!-- BELUM SELESAI -->
+                        {% for db in databases %}
+                        <option value="{{ db }}">{{ db }}</option>
+                        {% endfor %}
+                        <!-- IYAH BLUM -->
+                    </select>
+                </div>
+                <button type="submit" class="flex items-center border-2 border-gray-200 rounded-full shadow px-3 py-2 bg-white cursor-pointer hover:bg-transparent transition">
+                    <svg class="w-5 h-[28px] text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 2L11 13 M22 2L15 22L11 13L2 9L22 2Z" />
+                    </svg>
+                </button>
+            </form>
+            <form action="/crawl" method="POST" class="flex items-center gap-3" id="crawl-form">
+                <div class="flex items-center border-2 border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition w-full">
                     <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7m-6 0V4a2 2 0 00-2-2H9a2 2 0 00-2 2v3m6 0h6"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18"></path>
+                        <path d="M12 1a11 11 0 1 1 0 22a11 11 0 1 1 0-22 M3 6h18 M1 12h22 M3 18h18 M16 12a4 11 0 1 1 -8 0a4 11 0 1 1 8 0" />
                     </svg>
-                    <input type="text" name="domain" value="https://spada.upi.edu" class="flex-grow outline-none bg-transparent text-lg" placeholder="Domain (misal: upi.edu)" required>
+                    <input type="text" name="url" class="flex-grow outline-none bg-transparent text-lg" placeholder="Domain (misal: https://upi.edu)">
                 </div>
+                <div class="flex items-center border-2 border-gray-200 rounded-full shadow px-4 py-2 bg-white hover:shadow-lg transition">
+                    <select name="algorithm" class="flex-grow outline-none bg-transparent text-lg h-[28px] w-[125px]">
+                        <option value="" disabled selected>Algoritma</option>
+                        <option value="bfs">BFS</option>
+                        <option value="dfs">DFS</option>
+                    </select>
+                </div>
+                <button type="submit" class="flex items-center border-2 border-gray-200 rounded-full shadow px-3 py-2 bg-white cursor-pointer hover:bg-transparent transition">
+                    <svg class="w-5 h-[28px] text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M22 2L11 13 M22 2L15 22L11 13L2 9L22 2Z" />
+                    </svg>
+                </button>
+            </form>
+            <div class="text-red-500 text-sm ml-2 h-[20px]">
+            {% with message = get_flashed_messages(with_categories=true) %}
+                {% for category, message in message %}
+                    {{ message }}
+                {% endfor %}
+            {% endwith %}
             </div>
-            <button type="submit" class="hidden"></button>
-        </form>
->>>>>>> 6ff6c6251c8747241e6b592c30052780a3ef5a3c
+        </div>
+        <div class="flex w-full max-w-2xl text-gray-500 dark:text-gray-400 h-[50vh] overflow-hidden">
+            <div class="flex flex-col justify-end max-h-fit" id="logs"></div>
+        </div>
     </div>
+    <script>
+        $(document).ready(function() {
+            $('#logs').parent().hide();
+
+            $('#search-form button').hide();
+            $('#search-form input').on('input', function() {
+                if ($(this).val().length > 0) $('#search-form button').slideDown();
+                else $('#search-form button').slideUp();
+            });
+
+            $('#crawl-form button').hide();
+            $('#crawl-form input').on('input', function() {
+                if ($(this).val().length > 0 && $('#crawl-form select').val()) $('#crawl-form button').slideDown();
+                else $('#crawl-form button').slideUp();
+            });
+            $('#crawl-form select').change(function() {
+                if ($(this).val() && $('#crawl-form input').val().length > 0) $('#crawl-form button').slideDown();
+                else $('#crawl-form button').slideUp();
+            });
+
+            $('#crawl-form').on('submit', function() {
+                $('#logs').parent().slideDown();
+                $('#search-form').slideUp();
+                $('#logs').html('')
+
+                const eventSource = new EventSource("/logs/stream/" + $('#crawl-form select').val());
+                eventSource.onmessage = function (event) {
+                    $('#logs').append('<div class="text-sm">' + event.data + '</div>');
+                };
+
+                eventSource.onerror = function () {
+                    $('#logs').append('<div class="text-red-500 text-sm">Streaming log gagal atau telah selesai.</div>');
+                    eventSource.close();
+                };
+            });
+        });
+    </script>
 </body>
-</html> -->
+</html>
