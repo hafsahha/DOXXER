@@ -1,7 +1,4 @@
 class Config:
-    # URL awal (seed) untuk crawler
-    SEED_URL = 'https://www.upi.edu'
-
     # Batas maksimal halaman yang akan di-crawl
     MAX_CRAWL_PAGES = 200
 

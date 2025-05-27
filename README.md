@@ -133,7 +133,6 @@ Konfigurasi utama dapat diubah di file `config.py`:
 
 | Parameter | Deskripsi | Default |
 |-----------|-----------|---------|
-| `SEED_URL` | URL awal untuk crawler | https://www.upi.edu |
 | `MAX_CRAWL_PAGES` | Batas maksimal halaman yang di-crawl | 100 |
 | `MAX_SEARCH_RESULTS` | Batas maksimal hasil pencarian | 20 |
 | `DEBUG` | Mode debug | True |
@@ -265,7 +264,6 @@ numpy>=1.21.0
 
 Konfigurasi utama dapat diubah di file `config.py`:
 
-* `SEED_URL`: URL awal untuk crawler (default: [https://www.upi.edu](https://www.upi.edu))
 * `MAX_CRAWL_PAGES`: Batas maksimal halaman yang di-crawl (default: 100)
 * `MAX_SEARCH_RESULTS`: Batas maksimal hasil pencarian (default: 20)
 
