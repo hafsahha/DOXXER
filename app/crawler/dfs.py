@@ -33,13 +33,13 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
     session, engine = get_session_for_domain(domain, "dfs")
     Base.metadata.create_all(engine)
     visited = set()
-    stack = [(seed_url, 0)]  # Menyimpan URL dan kedalaman (depth)
+    stack = [(seed_url, 0, None)]  # Menyimpan URL dan kedalaman (depth)
     
     print(f"Mulai crawling DFS dari {seed_url}...")
     print(f"Base domain: {domain}")
 
     while stack and len(visited) < max_pages:
-        url, depth = stack.pop()
+        url, depth, parent_url = stack.pop()
         
         # Batasi kedalaman crawling
         if depth > max_depth:
@@ -64,9 +64,12 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
             text = extract_text(soup)
             links = extract_links(soup, url, domain)
             
-            page = CrawledPage(url=url)
-            page.title = title
-            page.text = text
+            page = CrawledPage(
+                url = url,
+                title = title,
+                text = text,
+                parent = parent_url
+            )
             page.set_links(links)
 
             session.add(page)
@@ -76,9 +79,9 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
             log_message(f"Ditemukan {len(links)} link di halaman ini")
 
             # Tambahkan link yang belum dikunjungi ke stack dengan penambahan kedalaman
-            for link_url, link_text in reversed(links):
-                if link_url not in visited and link_url not in stack:
-                    stack.append((link_url, depth + 1))  # Increment depth
+            for link_url, _ in reversed(links):
+                if link_url not in visited and all(link_url != s[0] for s in stack):
+                    stack.append((link_url, depth + 1, url))  # Increment depth
 
         except Exception as e:
             log_message(f"Error saat mengunjungi {url}: {str(e)}")

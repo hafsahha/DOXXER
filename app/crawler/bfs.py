@@ -34,13 +34,13 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
     session, engine = get_session_for_domain(domain, "bfs")
     Base.metadata.create_all(engine)
     visited = set()
-    queue = deque([seed_url])
+    queue = deque([(seed_url, None)])
     
     log_message(f"Mulai crawling BFS dari {seed_url}...")
     log_message(f"Base domain: {domain}")
 
     while queue and len(visited) < max_pages:
-        url = queue.popleft()
+        url, parent_url = queue.popleft()
         if url in visited:
             continue
         visited.add(url)
@@ -60,9 +60,12 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
             text = extract_text(soup)
             links = extract_links(soup, url, domain)
             
-            page = CrawledPage(url=url)
-            page.title = title
-            page.text = text
+            page = CrawledPage(
+                url = url,
+                title = title,
+                text = text,
+                parent = parent_url
+            )
             page.set_links(links)
 
             session.add(page)
@@ -72,9 +75,9 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
             log_message(f"Ditemukan {len(links)} link di halaman ini")
 
             # Tambahkan semua link yang belum dikunjungi dan belum ada di queue
-            for link_url, link_text in links:
-                if link_url not in visited and link_url not in queue:
-                    queue.append(link_url)
+            for link_url, _ in links:
+                if link_url not in visited and all(link_url != q[0] for q in queue):
+                    queue.append((link_url, url))
                     
         except Exception as e:
             log_message(f"Error saat mengunjungi {url}: {str(e)}")
