@@ -38,7 +38,12 @@ def get_available_databases():
     if os.path.exists(db_dir):
         for db_file in os.listdir(db_dir):
             if db_file.endswith('.db'):
-                databases.append(db_file)
+                db = {
+                    'val': db_file,
+                    'name': db_file.replace('.db', '').split('-')[1] if '-' in db_file else db_file.replace('.db', ''),
+                    'method': db_file.upper().split('-')[0] if '-' in db_file else None
+                }
+                databases.append(db)
     return databases
 
 def parse_database_name(db_name):
