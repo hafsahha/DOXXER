@@ -28,17 +28,26 @@
             <div class="rounded-lg bg-white dark:bg-gray-700 shadow-md overflow-hidden">
                 <ul class="divide-y divide-gray-200 dark:divide-gray-600">
                     {% for item in results %}
-                        <li class="p-4 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                                <a href="{{ item.url }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">{{ item.title }}</a>
-                                <a href="{{ url_for('main.show_route', target_url=item.url) }}" class="inline-flex items-center text-sm px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-900 transition">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path d="M9 L15 12 L9 15 Z M21 12 H9 M3 5 v14 M3 12 H6"></path>
-                                    </svg>
-                                    Lihat Rute Link
-                                </a>
+                        <li class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex flex-col">
+                                    <a href="{{ item.url }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">{{ item.title }}</a>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ item.url }}</div>
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                    {% if item.description %}
+                                        {{ item.description|truncate(150) }}
+                                    {% else %}
+                                        Tidak ada deskripsi tersedia.
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="mt-1 text-sm text-gray-500 dark:text-gray-400 truncate">{{ item.url }}</div>
+                            <a href="{{ url_for('main.show_route', target_url=item.url) }}" class="inline-flex items-center text-sm px-3 py-1 h-fit rounded-full bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-900 transition">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M6 6L18 12L6 18Z"></path>
+                                </svg>
+                                Lihat Rute Link
+                            </a>
                         </li>
                     {% endfor %}
                 </ul>
@@ -54,9 +63,8 @@
                     <div class="relative">
                         <select name="database" id="database-select" onchange="this.form.submit()" 
                                 class="appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 pl-4 pr-8 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Semua Database</option>
                             {% for db in databases %}
-                                <option value="{{ db }}" {% if database == db %}selected{% endif %}>{{ db }}</option>
+                                <option value="{{ db.val }}" {% if database == db.val %}selected{% endif %}>{{ db.name }} - {{ db.method }}</option>
                             {% endfor %}
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
