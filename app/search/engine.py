@@ -79,6 +79,7 @@ def load_data_from_db(database_name=None):
                     data[p.url] = {
                         'title': p.title or p.url,
                         'text': p.text or '',
+                        'parent': p.parent,
                         'links': p.get_links(),
                         'database': database_name
                     }
