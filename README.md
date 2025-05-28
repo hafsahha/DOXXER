@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Python-3.7+-blue.svg" alt="Python 3.7+">
   <img src="https://img.shields.io/badge/Flask-2.0.0+-green.svg" alt="Flask 2.0.0+">
   <img src="https://img.shields.io/badge/License-Educational-yellow.svg" alt="License">
+  <img src="https://img.shields.io/badge/Last%20Updated-May%202025-orange.svg" alt="Last Updated">
 </div>
 
 <p align="center">
@@ -28,7 +29,7 @@
 
 ## 🔍 Overview
 
-DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan pengguna menemukan informasi di situs-situs organisasi yang kompleks, seperti website universitas. Dengan menggunakan algoritma penelusuran graf Breadth-First Search (BFS) dan Depth-First Search (DFS), DOXXER menelusuri struktur website organisasi dan menyediakan fitur pencarian yang efisien.
+DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan pengguna menemukan informasi di situs-situs organisasi yang kompleks, seperti website universitas. Dengan menggunakan algoritma penelusuran graf Breadth-First Search (BFS) dan Depth-First Search (DFS), DOXXER menelusuri struktur website organisasi dan menyimpannya ke dalam database terpisah sesuai domain dan metode crawling. Sistem ini menyediakan pencarian berdasarkan kata kunci dengan fitur visualisasi rute yang memungkinkan pengguna melihat jalur navigasi dari halaman awal hingga halaman target.
 
 ## ✨ Fitur Utama
 
@@ -49,7 +50,7 @@ DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan penggun
 | Database | SQLite, SQLAlchemy |
 | Web Crawling | Selenium, BeautifulSoup |
 | Algoritma | BFS, DFS |
-| Pencarian | TF-IDF, Cosine Similarity (scikit-learn) |
+| Pencarian | Frekuensi kata kunci |
 | Frontend | HTML, Tailwind CSS, JavaScript |
 
 ## 📁 Struktur Aplikasi
@@ -62,8 +63,7 @@ DOXXER/
 │   │   ├── dfs.py                 # Implementasi DFS
 │   │   └── utils.py               # Fungsi pembantu crawler
 │   ├── search/                    # Modul pencarian
-│   │   ├── engine.py              # Mesin pencari
-│   │   └── similarity.py          # Fungsi kesamaan teks
+│   │   └── engine.py              # Mesin pencari (keyword matching)
 │   ├── __init__.py                # Inisialisasi aplikasi Flask
 │   ├── database.py                # Konfigurasi database
 │   ├── models.py                  # Model database
@@ -75,8 +75,8 @@ DOXXER/
 ├── static/                        # Aset statis
 │   └── style.css                  # CSS untuk tampilan
 ├── instance/                      # Data lokal (database)
-│   ├── bfs-[domain].db            # Database hasil BFS
-│   └── dfs-[domain].db            # Database hasil DFS
+│   ├── bfs-[domain].db            # Database hasil BFS (contoh: bfs-ipb.ac.id.db)
+│   └── dfs-[domain].db            # Database hasil DFS (contoh: dfs-harvard.edu.db)
 ├── config.py                      # Konfigurasi aplikasi
 ├── init_db.py                     # Script inisialisasi database
 ├── requirements.txt               # Dependensi
@@ -98,7 +98,7 @@ DOXXER/
 1. **Clone repository**
 
    ```bash
-   git clone https://github.com/yourusername/DOXXER.git
+   git clone https://github.com/hafsahha/DOXXER.git
    cd DOXXER
    ```
 
@@ -181,22 +181,63 @@ BFS menelusuri website level by level, sehingga halaman-halaman yang berjarak sa
 
 **Implementasi:**
 ```python
-def crawl(seed_url, max_pages):
-    queue = deque([seed_url])
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
+    driver = initialize_driver()
+    driver.get(seed_url)
+
+    domain = get_domain_from_url(seed_url)
+    session, engine = get_session_for_domain(domain, "bfs")
+    Base.metadata.create_all(engine)
     visited = set()
+    queue = deque([seed_url])
     
+    log_message(f"Mulai crawling BFS dari {seed_url}...")
+    log_message(f"Base domain: {domain}")
+
     while queue and len(visited) < max_pages:
         url = queue.popleft()
         if url in visited:
             continue
+        visited.add(url)        # Ekstrak dan simpan informasi halaman
+        log_message(f"Mengunjungi: {url}")
+        try:
+            driver.get(url)
+            time.sleep(2)
             
-        visited.add(url)
-        # Proses halaman dan ekstrak konten
-        
-        # Tambahkan semua link yang belum dikunjungi dan belum ada di queue
-        for link_url, link_text in links:
-            if link_url not in visited and link_url not in queue:
-                queue.append(link_url)
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            title = extract_title(soup, url)
+            text = extract_text(soup)
+            links = extract_links(soup, url, domain)
+            
+            page = CrawledPage(url=url)
+            page.title = title
+            page.text = text
+            page.set_links(links)
+            
+            # Melacak parent URL untuk visualisasi rute
+            parent_url = None
+            for url_in_queue in visited:
+                parent_page = session.query(CrawledPage).filter_by(url=url_in_queue).first()
+                if parent_page:
+                    parent_links = parent_page.get_links()
+                    for link_url, _ in parent_links:
+                        if link_url == url:
+                            parent_url = url_in_queue
+                            break
+                if parent_url:
+                    break
+            
+            page.parent = parent_url
+            session.add(page)
+            session.commit()
+            
+            # Tambahkan semua link yang belum dikunjungi ke queue
+            for link_url, link_text in links:
+                if link_url not in visited and link_url not in queue:
+                    queue.append(link_url)
+        except Exception as e:
+            log_message(f"Error saat mengunjungi {url}: {str(e)}")
 ```
 
 **Karakteristik:**
@@ -210,24 +251,70 @@ DFS menelusuri satu jalur hingga kedalaman maksimum sebelum kembali menjelajahi 
 
 **Implementasi:**
 ```python
-def crawl(seed_url, max_pages, max_depth):
-    stack = [(seed_url, 0)]  # (url, depth)
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH):
+    driver = initialize_driver()
+    driver.get(seed_url)
+
+    domain = get_domain_from_url(seed_url)
+    session, engine = get_session_for_domain(domain, "dfs")
+    Base.metadata.create_all(engine)
     visited = set()
+    stack = [(seed_url, 0)]  # (url, depth)
     
+    log_message(f"Mulai crawling DFS dari {seed_url}...")
+    log_message(f"Base domain: {domain}")
+
     while stack and len(visited) < max_pages:
         url, depth = stack.pop()
+        
+        # Batasi kedalaman crawling
         if depth > max_depth:
             continue
+        
         if url in visited:
             continue
-            
         visited.add(url)
-        # Proses halaman dan ekstrak konten
         
-        # Tambahkan link baru ke stack (terbalik untuk pertahankan urutan)
-        for link_url, link_text in reversed(links):
-            if link_url not in visited:
-                stack.append((link_url, depth + 1))
+        log_message(f"Depth {depth}: Mengunjungi {url}")
+        try:
+            driver.get(url)
+            time.sleep(2)
+            
+            html_content = driver.page_source
+            soup = BeautifulSoup(html_content, "html.parser")
+            title = extract_title(soup, url)
+            text = extract_text(soup)
+            links = extract_links(soup, url, domain)
+            
+            page = CrawledPage(url=url)
+            page.title = title
+            page.text = text
+            page.set_links(links)
+            
+            # Menerapkan parent tracking untuk visualisasi rute
+            parent_url = None
+            if depth > 0:
+                for visited_url in visited:
+                    parent_page = session.query(CrawledPage).filter_by(url=visited_url).first()
+                    if parent_page:
+                        parent_links = parent_page.get_links()
+                        for link_url, _ in parent_links:
+                            if link_url == url:
+                                parent_url = visited_url
+                                break
+                    if parent_url:
+                        break
+            
+            page.parent = parent_url
+            session.add(page)
+            session.commit()
+            
+            # Tambahkan link yang belum dikunjungi ke stack dengan penambahan kedalaman
+            for link_url, link_text in reversed(links):
+                if link_url not in visited:
+                    stack.append((link_url, depth + 1))  # Increment depth
+        except Exception as e:
+            log_message(f"Error saat mengunjungi {url}: {str(e)}")
 ```
 
 **Karakteristik:**
@@ -238,8 +325,8 @@ def crawl(seed_url, max_pages, max_depth):
 
 ## 📚 Dokumentasi
 
-- Analisis Kompleksitas Algoritma - Analisis detail tentang kompleksitas algoritma yang digunakan
-- Panduan Pengguna - Panduan lengkap penggunaan aplikasi
+- **[Analisis Kompleksitas](https://github.com/hafsahha/DOXXER/blob/main/ANALYSIS_COMPLEXITY.md)** - Analisis detail tentang kompleksitas waktu dan ruang algoritma yang digunakan
+- **[Panduan Pengguna](https://github.com/hafsahha/DOXXER/wiki/Panduan-Pengguna)** - Panduan lengkap penggunaan aplikasi dengan contoh dan tips
 
 ## 👥 Tim Pengembang
 
@@ -252,7 +339,7 @@ def crawl(seed_url, max_pages, max_depth):
 
 ## 📝 Lisensi
 
-Dibuat sebagai Proyek UTS Analisis dan Desain Algoritma,  
+Dibuat sebagai Proyek UTS Analisis Algoritma,  
 Universitas Pendidikan Indonesia, 2025
 
 
