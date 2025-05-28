@@ -161,7 +161,9 @@
                     // Auto-scroll to bottom
                     const terminal = document.getElementById('terminal');
                     terminal.scrollTop = terminal.scrollHeight;
-                };                eventSource.onerror = function () {
+                };
+                
+                eventSource.onerror = function () {
                     // Add completion message
                     $('#logs').append('<div class="mt-4 border-t border-gray-700 pt-3"><span class="text-gray-500">$</span> Crawling completed <span class="animate-pulse text-gray-500">▌</span></div>');
                     eventSource.close();
