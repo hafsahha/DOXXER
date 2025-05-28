@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Python-3.7+-blue.svg" alt="Python 3.7+">
   <img src="https://img.shields.io/badge/Flask-2.0.0+-green.svg" alt="Flask 2.0.0+">
   <img src="https://img.shields.io/badge/License-Educational-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/Last%20Updated-May%202025-orange.svg" alt="Last Updated">
+  <img src="https://img.shields.io/badge/Last%20Updated-May%202024-orange.svg" alt="Last Updated">
 </div>
 
 <p align="center">
@@ -214,8 +214,7 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
             page.title = title
             page.text = text
             page.set_links(links)
-            
-            # Melacak parent URL untuk visualisasi rute
+              # Melacak parent URL untuk visualisasi rute
             parent_url = None
             for url_in_queue in visited:
                 parent_page = session.query(CrawledPage).filter_by(url=url_in_queue).first()
@@ -231,8 +230,7 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
             page.parent = parent_url
             session.add(page)
             session.commit()
-            
-            # Tambahkan semua link yang belum dikunjungi ke queue
+              # Tambahkan semua link yang belum dikunjungi ke queue
             for link_url, link_text in links:
                 if link_url not in visited and link_url not in queue:
                     queue.append(link_url)
@@ -325,8 +323,8 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
 
 ## 📚 Dokumentasi
 
-- **[Analisis Kompleksitas](https://github.com/hafsahha/DOXXER/blob/main/ANALYSIS_COMPLEXITY.md)** - Analisis detail tentang kompleksitas waktu dan ruang algoritma yang digunakan
-- **[Panduan Pengguna](https://github.com/hafsahha/DOXXER/wiki/Panduan-Pengguna)** - Panduan lengkap penggunaan aplikasi dengan contoh dan tips
+- **[Analisis Kompleksitas](ANALYSIS_COMPLEXITY.md)** - Analisis detail tentang kompleksitas waktu dan ruang algoritma yang digunakan
+- **[Panduan Pengguna](docs/USER_GUIDE.md)** - Panduan lengkap penggunaan aplikasi dengan contoh dan tips
 
 ## 👥 Tim Pengembang
 
