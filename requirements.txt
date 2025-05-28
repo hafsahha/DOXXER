@@ -4,5 +4,3 @@ requests
 beautifulsoup4
 selenium
 webdriver-manager
-scikit-learn
-numpy
