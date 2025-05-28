@@ -63,7 +63,7 @@ DOXXER/
 │   │   ├── dfs.py                 # Implementasi DFS
 │   │   └── utils.py               # Fungsi pembantu crawler
 │   ├── search/                    # Modul pencarian
-│   │   └── engine.py              # Mesin pencari (keyword matching)
+│   │   └── engine.py              # Mesin pencari
 │   ├── __init__.py                # Inisialisasi aplikasi Flask
 │   ├── database.py                # Konfigurasi database
 │   ├── models.py                  # Model database
