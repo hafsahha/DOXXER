@@ -103,59 +103,49 @@ def search():
         )
 
 
-# tinggal route yah yang blum he he he
-@main_bp.route('/route/<path:target_url>')
-def show_route(target_url):
-    seed_url = request.args.get('seed_url')
-    route = find_route(seed_url, target_url)
+@main_bp.route('/route/<path:db>/<path:target_url>')
+def show_route(target_url, db):
+    """
+    Menampilkan rute dari seed_url ke target_url
+    """
+
+    # Validasi URL awal (seed)
+    data = load_data_from_db(db)
+    urls = [urls for urls, _ in data.items()]
+    seed_url = urls[0] if urls else None
+
+    # Cari rute dari seed_url ke target_url
+    route = find_route(data, seed_url, target_url)
     
+    # Jika tidak ada rute yang ditemukan, tampilkan pesan error
     if not route:
-        return render_template('index.html', error=f"Tidak dapat menemukan rute ke {target_url}")
+        return render_template('results.html', error=f"Tidak dapat menemukan rute ke {target_url}")
     
+    # Jika rute ditemukan, tampilkan halaman rute
     return render_template('route.html', route=route)
 
-def find_route(seed_url, target_url):
+def find_route(data, seed_url, target_url):
     """
-    Menemukan rute dari seed_url ke target_url menggunakan algoritma BFS
+    Menemukan rute dari seed_url ke target_url menggunakan algoritma BFS dengan backtracking parent.
     """
-    visited = set()
-    queue = [(seed_url, [])]  # (url, path_so_far)
-    
-    while queue:
-        current_url, path = queue.pop(0)
-        
-        if current_url == target_url:
-            # Rute ditemukan
-            return path + [{'url': current_url, 'label': get_page_title(current_url)}]
-            
-        if current_url in visited:
-            continue
-            
-        visited.add(current_url)
-        
-        # Mengambil semua tautan dari halaman saat ini
-        page = CrawledPage.query.filter_by(url=current_url).first()
-        if page:
-            links = page.get_links()
-            
-            # Menambahkan semua tautan yang belum dikunjungi ke antrian
-            for link_url, link_text in links:
-                if link_url not in visited:
-                    new_path = path + [{'url': current_url, 'label': get_page_title(current_url)}]
-                    queue.append((link_url, new_path))
-    
+
+    # Validasi parameter
+    if (not seed_url) or (not target_url) or (seed_url not in data) or (target_url not in data):
+        return None
+
+    # Backtracking untuk menemukan rute dari target_url ke seed_url
+    path = []
+    current = target_url
+    while current:
+        path.append(current)
+        if current == seed_url:
+            return path[::-1]
+        parent = data[current].get('parent')
+        if not parent or parent == current:
+            break
+        current = parent
+
     return None
-
-def get_page_title(url):
-    """
-    Mendapatkan judul halaman dari database
-    """
-
-    # Mengambil halaman dari database berdasarkan URL
-    page = CrawledPage.query.filter_by(url=url).first()
-    if page and page.title:
-        return page.title
-    return url
 
 
 @main_bp.route('/logs/stream/<algorithm>')
