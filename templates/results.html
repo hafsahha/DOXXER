@@ -42,7 +42,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <a href="{{ url_for('main.show_route', target_url=item.url) }}" class="inline-flex items-center text-sm px-3 py-1 h-fit rounded-full bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-900 transition">
+                            <a href="{{ url_for('main.show_route', db=database, target_url=item.url) }}" class="inline-flex items-center text-sm px-3 py-1 h-fit rounded-full bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-900 transition">
                                 <svg class="w-4 h-4 mr-1" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path d="M6 6L18 12L6 18Z"></path>
                                 </svg>
