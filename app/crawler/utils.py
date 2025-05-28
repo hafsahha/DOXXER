@@ -1,5 +1,4 @@
 from urllib.parse import urljoin, urlparse
-from bs4 import BeautifulSoup
 
 def extract_links(soup, base_url, base_domain):
     links = []
