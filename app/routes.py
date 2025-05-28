@@ -1,10 +1,8 @@
 from flask import Response, Blueprint, request, stream_with_context, render_template, redirect, url_for, flash
 from app.search.engine import search_keyword, load_data_from_db, get_available_databases
-from app.search.similarity import SearchEngine
 from app.crawler.bfs import log_stream as bfs_log
 from app.crawler.dfs import log_stream as dfs_log
 from app.crawler import bfs, dfs
-from app.models import CrawledPage
 from config import Config
 import requests
 
