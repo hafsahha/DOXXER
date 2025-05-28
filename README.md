@@ -252,7 +252,7 @@ def crawl(seed_url, max_pages, max_depth):
 
 ## 📝 Lisensi
 
-Dibuat sebagai Proyek UTS Analisis Algoritma,  
+Dibuat sebagai Proyek UTS Analisis dan Desain Algoritma,  
 Universitas Pendidikan Indonesia, 2025
 
 
