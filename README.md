@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Python-3.7+-blue.svg" alt="Python 3.7+">
   <img src="https://img.shields.io/badge/Flask-2.0.0+-green.svg" alt="Flask 2.0.0+">
   <img src="https://img.shields.io/badge/License-Educational-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/Last%20Updated-May%202024-orange.svg" alt="Last Updated">
+  <img src="https://img.shields.io/badge/Last%20Updated-May%202025-orange.svg" alt="Last Updated">
 </div>
 
 <p align="center">
@@ -30,6 +30,11 @@
 ## 🔍 Overview
 
 DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan pengguna menemukan informasi di situs-situs organisasi yang kompleks, seperti website universitas. Dengan menggunakan algoritma penelusuran graf Breadth-First Search (BFS) dan Depth-First Search (DFS), DOXXER menelusuri struktur website organisasi dan menyimpannya ke dalam database terpisah sesuai domain dan metode crawling. Sistem ini menyediakan pencarian berdasarkan kata kunci dengan fitur visualisasi rute yang memungkinkan pengguna melihat jalur navigasi dari halaman awal hingga halaman target.
+
+## 🐈 Preview Pengunaan DOXXER
+
+https://github.com/user-attachments/assets/4e120efd-dc22-4dd5-8d59-b8f5bf8bc66f
+
 
 ## ✨ Fitur Utama
 
