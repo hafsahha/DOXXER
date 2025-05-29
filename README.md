@@ -319,7 +319,7 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
 
 ## 👥 Tim Pengembang
 
-| Nama | NPM |
+| Nama | NIM |
 |------|-----|
 | Datuk Daneswara R. Samsura | 2308224 |
 | Hafsah Hamidah | 2311474 |
