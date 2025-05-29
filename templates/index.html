@@ -7,12 +7,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <title>Mesin Pencari Informasi</title>
 </head>
-<body>
-    <!-- MAIN CONTAINER -->
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
-        <!-- Judul -->
-        <div class="mb-16">
-            <h1 class="text-3xl text-black dark:text-white">Sistem Pencarian Informasi Publik</h1>
+<body>    <!-- MAIN CONTAINER -->
+    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">        <!-- Logo -->
+        <!-- Logo -->
+        <div class="mb-8">
+            <img src="{{ url_for('static', filename='images/doxxer.png') }}" alt="DOXXER Logo" class="mx-auto h-35" onerror="this.onerror=null; this.src='https://via.placeholder.com/240x96?text=DOXXER'; console.log('Error loading image');">
         </div>
 
         <!-- Form Search dan Crawl -->

@@ -14,7 +14,7 @@ def index():
     Halaman utama aplikasi
     """
     databases = get_available_databases()
-    return render_template('index.html', databases=databases)
+    return render_template('index.html', databases=databases, debug=True)
 
 
 @main_bp.route('/crawl', methods=['POST'])
