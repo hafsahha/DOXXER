@@ -13,25 +13,11 @@
 
 ---
 
-## 📋 Daftar Isi
-
-- [Overview](#-overview)
-- [Fitur Utama](#-fitur-utama)
-- [Teknologi](#-teknologi)
-- [Struktur Aplikasi](#-struktur-aplikasi)
-- [Instalasi](#-instalasi)
-- [Konfigurasi](#-konfigurasi)
-- [Penggunaan](#-penggunaan)
-- [Algoritma](#-algoritma)
-- [Dokumentasi](#-dokumentasi)
-- [Tim Pengembang](#-tim-pengembang)
-- [Lisensi](#-lisensi)
-
 ## 🔍 Overview
 
 DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan pengguna menemukan informasi di situs-situs organisasi yang kompleks, seperti website universitas. Dengan menggunakan algoritma penelusuran graf Breadth-First Search (BFS) dan Depth-First Search (DFS), DOXXER menelusuri struktur website organisasi dan menyimpannya ke dalam database terpisah sesuai domain dan metode crawling. Sistem ini menyediakan pencarian berdasarkan kata kunci dengan fitur visualisasi rute yang memungkinkan pengguna melihat jalur navigasi dari halaman awal hingga halaman target.
 
-## 🐈 Preview Pengunaan DOXXER
+## 🐈 Preview
 
 https://github.com/user-attachments/assets/4e120efd-dc22-4dd5-8d59-b8f5bf8bc66f
 
