@@ -1,30 +1,51 @@
-from app.models import CrawledPage, Base
-from config import Config
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import json
+from app.models import CrawledPage, Base
+import os
 import re
 
 def search_keyword(data, keyword):
     """
-    Search for keywords in the data dictionary
-    Returns a list of results sorted by relevance
+    Mencari keyword dalam data yang diberikan
     """
+
+    # Ubah keyword menjadi lowercase untuk pencarian case-insensitive
     keyword_lower = keyword.lower()
     results = []
 
+    # Loop seluruh data untuk mencari keyword
     for url, page in data.items():
         if keyword_lower in page['text'].lower():
-            # Simple relevance score based on keyword frequency
-            relevance = page['text'].lower().count(keyword_lower)
+            relevance = page['text'].lower().count(keyword_lower) # Hitung relevansi berdasarkan jumlah kemunculan keyword
+            words = page['text'].split() # Pisahkan teks menjadi kata-kata
+            lower_words = [w.lower() for w in words] # Buat versi lowercase dari kata-kata untuk pencarian case-insensitive
+            indices = [i for i, w in enumerate(lower_words) if w == keyword_lower] # Temukan indeks dari semua kemunculan keyword
+
+            # Jika ada kemunculan keyword, ambil snippet sekitar kemunculan tersebut
+            if indices:
+                idx = indices[0]
+                snippet_words = words[max(0, idx-10):idx+30] # Ambil 10 kata sebelum dan 30 kata setelah kemunculan keyword
+                
+                # Cetak tebal keyword dalam snippet
+                snippet_words_bolded = [
+                    f"<b>{w}</b>" if w.lower() == keyword_lower else w
+                    for w in snippet_words
+                ]
+                snippet = ' '.join(snippet_words_bolded) # Gabungkan kata-kata menjadi satu string
+            
+            # Jika tidak ada kemunculan keyword, ambil 250 karakter pertama sebagai snippet
+            else:
+                snippet = page['text'][:250]
+            
+            # Tambahkan hasil pencarian ke dalam list
             results.append({
                 'url': url, 
                 'title': page.get('title', url),
+                'snippet': snippet,
                 'score': relevance
             })
     
-    # Sort by relevance score in descending order
+    # Urutkan hasil berdasarkan skor relevansi
     results.sort(key=lambda x: x.get('score', 0), reverse=True)
     return results
 
@@ -103,6 +124,7 @@ def load_data_from_db(database_name=None):
                     data[p.url] = {
                         'title': p.title or p.url,
                         'text': p.text or '',
+                        'parent': p.parent,
                         'links': p.get_links(),
                         'database': db_file
                     }
