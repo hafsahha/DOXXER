@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Python-3.7+-blue.svg" alt="Python 3.7+">
   <img src="https://img.shields.io/badge/Flask-2.0.0+-green.svg" alt="Flask 2.0.0+">
   <img src="https://img.shields.io/badge/License-Educational-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/Last%20Updated-May%202025-orange.svg" alt="Last Updated">
+  <img src="https://img.shields.io/badge/Last%20Updated-June%202025-orange.svg" alt="Last Updated">
 </div>
 
 <p align="center">
