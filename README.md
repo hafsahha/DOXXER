@@ -19,7 +19,7 @@ DOXXER adalah mesin pencari web internal yang dirancang untuk memudahkan penggun
 
 ## 🐈 Preview
 
-https://github.com/user-attachments/assets/4e120efd-dc22-4dd5-8d59-b8f5bf8bc66f
+https://github.com/user-attachments/assets/207b41d5-5922-4da0-810e-6e56b8415013
 
 
 ## ✨ Fitur Utama
