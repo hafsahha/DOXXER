@@ -1,9 +1,12 @@
 class Config:
     # Batas maksimal halaman yang akan di-crawl
-    MAX_CRAWL_PAGES = 200
+    MAX_CRAWL_PAGES = 500
 
     # Batas maksimal kedalaman crawling (hanya untuk DFS)
-    MAX_CRAWL_DEPTH = 3
+    MAX_CRAWL_DEPTH = 5
+
+    # Batas maksimal derajat (degree) crawling (hanya untuk DFS)
+    MAX_CRAWL_DEGREE = 20
 
     # Batas maksimal hasil pencarian yang ditampilkan
     MAX_SEARCH_RESULTS = 20
