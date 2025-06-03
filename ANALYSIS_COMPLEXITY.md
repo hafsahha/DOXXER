@@ -11,28 +11,62 @@ DOXXER adalah mesin pencari informasi publik organisasi berbasis penelusuran gra
 BFS diimplementasikan untuk melakukan crawling pada website organisasi dengan menelusuri halaman web secara level by level.
 
 ```python
-def bfs_crawl(seed_url, max_pages=100):
-    # Inisialisasi
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_degree=Config.MAX_CRAWL_DEGREE):
+
+    #inisialisasi
+    driver = initialize_driver()
+    driver.set_page_load_timeout(15)
+    driver.get(seed_url)
+
     visited = set()
-    queue = deque([seed_url])
+    failed = set()
+    queue = deque([(seed_url, 0, None)])
     
+    # loop semua halaman
     while queue and len(visited) < max_pages:
-        url = queue.popleft()  # Ambil URL dari depan antrian
-        
-        # Proses halaman
+        url, depth, parent_url = queue.popleft() # ambil komponen dari queue
+
+        # Lewati URL yang sudah dikunjungi
+        # ...
+
+        # Lewati URL yang sudah ada di database
+        # ...
+
+        # Batasi derajat (degree) crawling
         # ...
         
-        # Tambahkan semua link yang belum dikunjungi ke queue
-        for link_url, link_text in links:
-            if link_url not in visited and link_url not in queue:
-                queue.append(link_url)
+        success = False
+        for attempt in range(3):
+            try:
+                # Iterasi halaman yang error (max. 3)
+                # ...
+
+            except Exception as e:
+                # Error message
+
+        # Skip halaman yang tidak bisa diproses dan dump ke failed set
+        if not success:
+            failed.add(url)
+            continue
+        
+        try:
+            # Proses halaman
+            # ...
+                    
+        except Exception as e:
+            # Error message
+
+    log_stream.clear()  # Kosongkan log stream setelah selesai
+    session.remove()  # Tutup session untuk domain ini
+    driver.quit()
+    return visited # Kembalikan hasil crawl
 ```
 
 #### Analisis Kompleksitas
-- **Waktu**: O(V + E) di mana V adalah jumlah node (halaman web) dan E adalah jumlah edge (link antar halaman).
-  - Setiap node dikunjungi tepat sekali: O(V)
-  - Setiap edge diperiksa tepat sekali: O(E)
-- **Ruang**: O(V) untuk menyimpan visited set dan queue.
+- **Waktu**: O(v + e) di mana v adalah jumlah node (halaman web) dan e adalah jumlah edge (link antar halaman).
+  - Setiap node dikunjungi tepat sekali: O(v)
+  - Setiap edge diperiksa tepat sekali: O(e)
+- **Ruang**: O(v) untuk menyimpan visited set dan queue.
   - Dalam kasus terburuk, semua node bisa ada dalam antrian.
 
 ### 2. Depth-First Search (DFS)
@@ -41,27 +75,64 @@ def bfs_crawl(seed_url, max_pages=100):
 DFS diimplementasikan untuk melakukan crawling dengan mengeksplorasi jalur terjauh terlebih dahulu sebelum backtracking.
 
 ```python
-def dfs_crawl(seed_url, max_pages=100):
-    # Inisialisasi
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH, max_degree=Config.MAX_CRAWL_DEGREE):
+
+    # inisialisasi
+    driver = initialize_driver()
+    driver.set_page_load_timeout(15)
+    driver.get(seed_url)
+
     visited = set()
-    stack = [seed_url]
+    failed = set()
+    stack = [(seed_url, 0, None)]  # Menyimpan URL dan kedalaman (depth)
     
+    # loop semua halaman
     while stack and len(visited) < max_pages:
-        url = stack.pop()  # Ambil URL dari atas stack
+        url, depth, parent_url = stack.pop() # ambil komponen dari stack
         
-        # Proses halaman
+        # Lewati URL yang sudah dikunjungi atau gagal
+        # ...
+
+        # Lewati URL yang sudah ada di database
         # ...
         
-        # Tambahkan link yang belum dikunjungi ke stack (terbalik untuk mempertahankan urutan)
-        for link_url, link_text in reversed(links):
-            if link_url not in visited and link_url not in stack:
-                stack.append(link_url)
+        # Batasi kedalaman crawling
+        # ...
+
+        # Batasi derajat (degree) crawling
+        # ...
+            
+        success = False
+        for attempt in range(3):
+            try:
+                # Iterasi halaman yang error (max. 3)
+                # ...
+
+            except Exception as e:
+                # Error message
+
+        # Skip halaman yang tidak bisa diproses dan dump ke failed set
+        if not success:
+            failed.add(url)
+            continue
+
+        try:
+            # Proses halaman
+            # ...
+                    
+        except Exception as e:
+            # Error message
+
+    log_stream.clear()  # Kosongkan log stream setelah selesai
+    session.remove()  # Tutup session untuk domain ini
+    driver.quit()
+    return visited # Kembalikan hasil crawl
 ```
 
 #### Analisis Kompleksitas
-- **Waktu**: O(V + E) di mana V adalah jumlah node (halaman web) dan E adalah jumlah edge (link antar halaman).
-- **Ruang**: O(V) untuk menyimpan visited set dan stack.
-  - Dalam kasus terburuk (graf linear), stack bisa berisi semua node.
+- **Waktu**: O(v + e) di mana v adalah jumlah vertex (halaman web) dan e adalah jumlah edge (link antar halaman).
+- **Ruang**: O(v) untuk menyimpan visited set dan stack.
+  - Dalam kasus terburuk (graf linear), stack bisa berisi semua vertex.
 
 ### 3. Pencarian Rute (Find Route)
 
@@ -90,9 +161,9 @@ def find_route(data, seed_url, target_url):
 ```
 
 #### Analisis Kompleksitas
-- **Waktu**: O(D) di mana D adalah kedalaman/jarak dari target URL ke seed URL dalam grafik crawling.
-  - Dalam kasus terburuk, jika target adalah daun terdalam, kompleksitasnya bisa menjadi O(V) di mana V adalah jumlah node.
-- **Ruang**: O(D) untuk menyimpan path, atau O(V) dalam kasus terburuk.
+- **Waktu**: O(d) di mana d adalah kedalaman/jarak dari target URL ke seed URL dalam grafik crawling.
+  - Dalam kasus terburuk, jika target adalah daun terdalam, kompleksitasnya bisa menjadi O(n) di mana n adalah jumlah node.
+- **Ruang**: O(d) untuk menyimpan path, atau O(n) dalam kasus terburuk.
   - Path berisi node-node yang membentuk jalur dari seed URL ke target URL.
 
 ### 4. Algoritma Pencarian Berdasarkan Frekuensi Kata Kunci
@@ -102,30 +173,53 @@ Sistem menggunakan algoritma pencarian teks sederhana berdasarkan frekuensi kata
 
 ```python
 def search_keyword(data, keyword):
+    # Ubah keyword menjadi lowercase untuk pencarian case-insensitive
     keyword_lower = keyword.lower()
     results = []
 
+    # Loop seluruh data untuk mencari keyword
     for url, page in data.items():
         if keyword_lower in page['text'].lower():
-            # Simple relevance score based on keyword frequency
-            relevance = page['text'].lower().count(keyword_lower)
+            relevance = page['text'].lower().count(keyword_lower) # Hitung relevansi berdasarkan jumlah kemunculan keyword
+            words = page['text'].split() # Pisahkan teks menjadi kata-kata
+            lower_words = [w.lower() for w in words] # Buat versi lowercase dari kata-kata untuk pencarian case-insensitive
+            indices = [i for i, w in enumerate(lower_words) if w == keyword_lower] # Temukan indeks dari semua kemunculan keyword
+
+            # Jika ada kemunculan keyword, ambil snippet sekitar kemunculan tersebut
+            if indices:
+                idx = indices[0]
+                snippet_words = words[max(0, idx-10):idx+30] # Ambil 10 kata sebelum dan 30 kata setelah kemunculan keyword
+                
+                # Cetak tebal keyword dalam snippet
+                snippet_words_bolded = [
+                    f"<b>{w}</b>" if w.lower() == keyword_lower else w
+                    for w in snippet_words
+                ]
+                snippet = ' '.join(snippet_words_bolded) # Gabungkan kata-kata menjadi satu string
+            
+            # Jika tidak ada kemunculan keyword, ambil 250 karakter pertama sebagai snippet
+            else:
+                snippet = page['text'][:250]
+            
+            # Tambahkan hasil pencarian ke dalam list
             results.append({
                 'url': url, 
                 'title': page.get('title', url),
+                'snippet': snippet,
                 'score': relevance
             })
     
-    # Sort by relevance score in descending order
+    # Urutkan hasil berdasarkan skor relevansi
     results.sort(key=lambda x: x.get('score', 0), reverse=True)
     return results
 ```
 
 #### Analisis Kompleksitas
 - **Waktu**: 
-  - Pencarian kata kunci: O(N * M) di mana N adalah jumlah halaman dan M adalah rata-rata panjang teks per halaman
-  - Pengurutan hasil berdasarkan relevansi: O(K log K) di mana K adalah jumlah hasil yang cocok
-  - Total kompleksitas waktu: O(N * M + K log K)
-- **Ruang**: O(K) di mana K adalah jumlah hasil yang cocok
+  - Pencarian kata kunci: O(n * m) di mana n adalah jumlah halaman dan m adalah rata-rata panjang teks per halaman
+  - Pengurutan hasil berdasarkan relevansi: O(k log k) di mana k adalah jumlah hasil yang cocok
+  - Total kompleksitas waktu: O(n * m + k log k)
+- **Ruang**: O(k) di mana k adalah jumlah hasil yang cocok
 
 ## Perbandingan BFS vs DFS dalam Konteks Web Crawling
 
@@ -153,13 +247,14 @@ def search_keyword(data, keyword):
 2. **Parent Tracking**: Mekanisme pelacakan parent URL untuk memudahkan visualisasi rute tanpa perlu algoritma pencarian path tambahan.
 3. **Pembatasan Jumlah Halaman**: Parameter `max_pages` membatasi jumlah halaman yang dijelajahi.
 4. **Pembatasan Kedalaman**: Untuk DFS, parameter `max_depth` mencegah penelusuran terlalu dalam yang dapat menghabiskan waktu dan sumber daya.
-5. **Validasi URL**: Sistem hanya menjelajahi URL yang valid dan termasuk dalam domain yang sama.
-6. **Penanganan Error**: Sistem menangani error saat crawling untuk mencegah kegagalan proses keseluruhan.
-7. **Relevance Scoring**: Pengurutan hasil pencarian berdasarkan frekuensi kemunculan kata kunci untuk meningkatkan relevansi hasil.
+5. **Pembatasan Ekspansi Node**: parameter `max_degree` membatasi jumlah children yang dimiliki suatu node atau ekspansi suatu halaman.
+6. **Validasi URL**: Sistem hanya menjelajahi URL yang valid dan termasuk dalam domain yang sama.
+7. **Penanganan Error**: Sistem menangani error saat crawling untuk mencegah kegagalan proses keseluruhan.
+8. **Relevance Scoring**: Pengurutan hasil pencarian berdasarkan frekuensi kemunculan kata kunci untuk meningkatkan relevansi hasil.
 
 ## Kesimpulan
 Pemilihan algoritma BFS atau DFS untuk web crawling bergantung pada karakteristik situs web dan tujuan crawling. Untuk pencarian informasi umum dan menemukan jalur terpendek, BFS lebih disarankan. Untuk eksplorasi mendalam pada situs web dengan struktur hierarkis yang dalam, DFS bisa menjadi pilihan yang lebih baik.
 
-Kompleksitas waktu untuk kedua algoritma crawling adalah O(V + E), tetapi BFS umumnya membutuhkan lebih banyak memori dibandingkan DFS. Dalam implementasi nyata, pembatasan jumlah halaman, pembatasan kedalaman, dan teknik pelacakan parent sangat penting untuk menjaga efisiensi sistem dan memudahkan visualisasi rute.
+Kompleksitas waktu untuk kedua algoritma crawling adalah O(v + e), tetapi BFS umumnya membutuhkan lebih banyak memori dibandingkan DFS. Dalam implementasi nyata, pembatasan jumlah halaman, pembatasan kedalaman, dan teknik pelacakan parent sangat penting untuk menjaga efisiensi sistem dan memudahkan visualisasi rute.
 
-Algoritma pencarian berdasarkan frekuensi kata kunci memberikan hasil yang lebih relevan daripada pencarian teks sederhana, dengan kompleksitas waktu O(N * M + K log K) yang masih efisien untuk ukuran database website organisasi umumnya.
+Algoritma pencarian berdasarkan frekuensi kata kunci memberikan hasil yang lebih relevan daripada pencarian teks sederhana, dengan kompleksitas waktu O(n * m + k log k) yang masih efisien untuk ukuran database website organisasi umumnya.

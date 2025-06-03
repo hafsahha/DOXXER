@@ -129,12 +129,13 @@ DOXXER/
 
 ## ⚙️ Konfigurasi
 
-Konfigurasi utama dapat diubah di file `config.py`:
+Konfigurasi utama dapat diubah di file [`config.py`](config.py):
 
 | Parameter | Deskripsi | Default |
 |-----------|-----------|---------|
 | `MAX_CRAWL_PAGES` | Batas maksimal halaman yang di-crawl | 200 |
-| `MAX_CRAWL_DEPTH` | Batas kedalaman maksimal (hanya DFS) | 3 |
+| `MAX_CRAWL_DEPTH` | Batas kedalaman maksimal (hanya DFS) | 5 |
+| `MAX_CRAWL_DEGREE` | Batas ekspansi node maksimal | 20 |
 | `MAX_SEARCH_RESULTS` | Batas maksimal hasil pencarian per halaman | 20 |
 | `DEBUG` | Mode debug | True |
 
@@ -172,61 +173,98 @@ BFS menelusuri website level by level, sehingga halaman-halaman yang berjarak sa
 
 **Implementasi:**
 ```python
-def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES):
-    driver = initialize_driver()
-    driver.get(seed_url)
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_degree=Config.MAX_CRAWL_DEGREE):
+    seed_url = seed_url.replace("www.", "")
+    seed_url = seed_url[:-1] if seed_url.endswith("/") else seed_url  # Hapus trailing slash jika ada
 
+    driver = initialize_driver()
+    driver.set_page_load_timeout(15)
+    driver.get(seed_url)
+    
     domain = get_domain_from_url(seed_url)
     session, engine = get_session_for_domain(domain, "bfs")
     Base.metadata.create_all(engine)
     visited = set()
-    queue = deque([seed_url])
+    failed = set()
+    queue = deque([(seed_url, 0, None)])
     
     log_message(f"Mulai crawling BFS dari {seed_url}...")
-    log_message(f"Base domain: {domain}")
 
     while queue and len(visited) < max_pages:
-        url = queue.popleft()
-        if url in visited:
+        url, depth, parent_url = queue.popleft()
+        url = url.replace("www.", "")
+        url = url[:-1] if url.endswith("/") else url  # Hapus trailing slash jika ada
+        
+        # Lewati URL yang sudah dikunjungi
+        if any(url == v[0] for v in visited) or url in failed:
             continue
-        visited.add(url)        # Ekstrak dan simpan informasi halaman
-        log_message(f"Mengunjungi: {url}")
+        
+        # Lewati URL yang sudah ada di database
+        if session.query(CrawledPage).filter_by(url=url).first():
+            continue
+
+        # Batasi derajat (degree) crawling
+        parent_count = sum(1 for _, p in visited if p == parent_url)
+        print(f"Parent URL: {parent_url}, Count: {parent_count}")
+        if parent_count >= max_degree:
+            log_message(f"Melebihi batas derajat (degree) crawling untuk {url}.")
+            continue
+        
+        log_message(f"{depth} - Mengunjungi: {url}")
+        success = False
+        for attempt in range(3):
+            try:
+                driver.get(url)
+                time.sleep(2)
+                success = True
+                break
+
+            except Exception as e:
+                log_message(f"Error saat mengunjungi {url} (attempt {attempt + 1}): {str(e)}")
+
+        if not success:
+            log_message(f"Error saat mengunjungi {url} setelah 3 percobaan. Melanjutkan ke URL berikutnya...")
+            failed.add(url)
+            continue
+        
         try:
-            driver.get(url)
-            time.sleep(2)
-            
             html_content = driver.page_source
             soup = BeautifulSoup(html_content, "html.parser")
             title = extract_title(soup, url)
             text = extract_text(soup)
-            links = extract_links(soup, url, domain)
+            links = extract_links(soup, url)
             
-            page = CrawledPage(url=url)
-            page.title = title
-            page.text = text
+            page = CrawledPage(
+                url = url,
+                title = title,
+                text = text,
+                parent = parent_url
+            )
             page.set_links(links)
-              # Melacak parent URL untuk visualisasi rute
-            parent_url = None
-            for url_in_queue in visited:
-                parent_page = session.query(CrawledPage).filter_by(url=url_in_queue).first()
-                if parent_page:
-                    parent_links = parent_page.get_links()
-                    for link_url, _ in parent_links:
-                        if link_url == url:
-                            parent_url = url_in_queue
-                            break
-                if parent_url:
-                    break
-            
-            page.parent = parent_url
+
             session.add(page)
             session.commit()
-              # Tambahkan semua link yang belum dikunjungi ke queue
-            for link_url, link_text in links:
-                if link_url not in visited and link_url not in queue:
-                    queue.append(link_url)
+            
+            log_message(f"Halaman tersimpan: {title} ({url})")
+            visited.add((url, parent_url))  # Simpan URL yang sudah dikunjungi
+
+            # Tambahkan semua link yang belum dikunjungi dan belum ada di queue
+            qty = 0
+            for target, _ in links:
+                target = target.replace("www.", "")
+                if target not in visited and all(target != q[0] for q in queue) and is_valid_url(target, url):
+                    queue.append((target, depth + 1, url))
+                    qty += 1
+            log_message(f"Ditemukan {qty} link di halaman ini")
+                    
         except Exception as e:
             log_message(f"Error saat mengunjungi {url}: {str(e)}")
+
+    log_message(f"BFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    log_stream.clear()  # Kosongkan log stream setelah selesai
+    session.remove()  # Tutup session untuk domain ini
+    driver.quit()
+    return visited
 ```
 
 **Karakteristik:**
@@ -240,70 +278,102 @@ DFS menelusuri satu jalur hingga kedalaman maksimum sebelum kembali menjelajahi 
 
 **Implementasi:**
 ```python
-def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH):
+def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL_DEPTH, max_degree=Config.MAX_CRAWL_DEGREE):
+    seed_url = seed_url.replace("www.", "")
+    seed_url = seed_url[:-1] if seed_url.endswith("/") else seed_url  # Hapus trailing slash jika ada
+
     driver = initialize_driver()
+    driver.set_page_load_timeout(15)
     driver.get(seed_url)
 
     domain = get_domain_from_url(seed_url)
     session, engine = get_session_for_domain(domain, "dfs")
     Base.metadata.create_all(engine)
     visited = set()
-    stack = [(seed_url, 0)]  # (url, depth)
+    failed = set()
+    stack = [(seed_url, 0, None)]  # Menyimpan URL dan kedalaman (depth)
     
     log_message(f"Mulai crawling DFS dari {seed_url}...")
-    log_message(f"Base domain: {domain}")
 
     while stack and len(visited) < max_pages:
-        url, depth = stack.pop()
+        url, depth, parent_url = stack.pop()
+        url = url.replace("www.", "")
+        url = url[:-1] if url.endswith("/") else url  # Hapus trailing slash jika ada
+        
+        # Lewati URL yang sudah dikunjungi atau gagal
+        if any(url == v[0] for v in visited) or url in failed:
+            continue
+
+        # Lewati URL yang sudah ada di database
+        if session.query(CrawledPage).filter_by(url=url).first():
+            continue
         
         # Batasi kedalaman crawling
         if depth > max_depth:
             continue
-        
-        if url in visited:
+
+        # Batasi derajat (degree) crawling
+        parent_count = sum(1 for _, p in visited if p == parent_url)
+        print(f"Parent URL: {parent_url}, Count: {parent_count}")
+        if parent_count >= max_degree:
+            log_message(f"Melebihi batas derajat (degree) crawling untuk {url}.")
             continue
-        visited.add(url)
-        
-        log_message(f"Depth {depth}: Mengunjungi {url}")
-        try:
-            driver.get(url)
-            time.sleep(2)
             
+        log_message(f"{depth} - Mengunjungi {url}")
+        success = False
+        for attempt in range(3):
+            try:
+                driver.get(url)
+                time.sleep(2)
+                success = True
+                break
+
+            except Exception as e:
+                log_message(f"Error saat mengunjungi {url} (attempt {attempt + 1}): {str(e)}")
+
+        if not success:
+            log_message(f"Error saat mengunjungi {url} setelah 3 percobaan. Melanjutkan ke URL berikutnya...")
+            failed.add(url)
+            continue
+
+        try:
             html_content = driver.page_source
             soup = BeautifulSoup(html_content, "html.parser")
             title = extract_title(soup, url)
             text = extract_text(soup)
-            links = extract_links(soup, url, domain)
+            links = extract_links(soup, url)
             
-            page = CrawledPage(url=url)
-            page.title = title
-            page.text = text
+            page = CrawledPage(
+                url = url,
+                title = title,
+                text = text,
+                parent = parent_url
+            )
             page.set_links(links)
-            
-            # Menerapkan parent tracking untuk visualisasi rute
-            parent_url = None
-            if depth > 0:
-                for visited_url in visited:
-                    parent_page = session.query(CrawledPage).filter_by(url=visited_url).first()
-                    if parent_page:
-                        parent_links = parent_page.get_links()
-                        for link_url, _ in parent_links:
-                            if link_url == url:
-                                parent_url = visited_url
-                                break
-                    if parent_url:
-                        break
-            
-            page.parent = parent_url
+
             session.add(page)
             session.commit()
             
-            # Tambahkan link yang belum dikunjungi ke stack dengan penambahan kedalaman
-            for link_url, link_text in reversed(links):
-                if link_url not in visited:
-                    stack.append((link_url, depth + 1))  # Increment depth
+            log_message(f"Halaman tersimpan: {title} ({url})")
+            visited.add((url, parent_url))  # Simpan URL yang sudah dikunjungi
+
+            # Tambahkan semua link yang belum dikunjungi dan belum ada di queue
+            qty = 0
+            for target, _ in links:
+                target = target.replace("www.", "")
+                if target not in visited and all(target != s[0] for s in stack) and is_valid_url(target, url):
+                    stack.append((target, depth + 1, url))
+                    qty += 1
+            log_message(f"Ditemukan {qty} link di halaman ini")
+
         except Exception as e:
             log_message(f"Error saat mengunjungi {url}: {str(e)}")
+
+    log_message(f"DFS Crawling selesai! Total {len(visited)} halaman dikunjungi.")
+    log_stream.clear()
+    session.remove()
+    driver.quit()
+    return visited
 ```
 
 **Karakteristik:**
@@ -315,7 +385,6 @@ def crawl(seed_url, max_pages=Config.MAX_CRAWL_PAGES, max_depth=Config.MAX_CRAWL
 ## 📚 Dokumentasi
 
 - **[Analisis Kompleksitas](ANALYSIS_COMPLEXITY.md)** - Analisis detail tentang kompleksitas waktu dan ruang algoritma yang digunakan
-- **[Panduan Pengguna](docs/USER_GUIDE.md)** - Panduan lengkap penggunaan aplikasi dengan contoh dan tips
 
 ## 👥 Tim Pengembang
 
